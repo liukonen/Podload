@@ -134,14 +134,11 @@ public partial class xmlAccess
 
                 try
                 {
-                    WebClient Client = new WebClient();
-                    Client.UseDefaultCredentials = true;
-                    Client.DownloadFile(new Uri(request.path), pathToSave);
-                    Client.Dispose();
+                    StandardDownloadFile(request.uid, FileName);
                     request.downloaded = "True";
                     Console.WriteLine("Downloaded: " + request.uid);
                 }
-                catch
+                catch //if the standard method failes download, try again using a stream based download
                 {
                     StreamDownloadFile(request.path, pathToSave); request.downloaded = "True";
                     Console.WriteLine("Downloaded: " + request.uid);
@@ -157,28 +154,36 @@ public partial class xmlAccess
         catch (Exception X) { HandleErrors(string.Concat(request.uid, ":", X.Message)); }
     }
 
-    //Not orginal to me... Found this online somewhere
-    public void StreamDownloadFile(string URL, String SavePath)
+    private void StandardDownloadFile(string URL, String SavePath)
+    {
+        using (WebClient Client = new WebClient())
+        {
+            Client.UseDefaultCredentials = true;
+            Client.DownloadFile(new Uri(URL), SavePath);
+        }
+    }
+  
+    private void StreamDownloadFile(string URL, String SavePath)
     {
         const int bufferLength = 32768; //32k
 
-        WebRequest w = WebRequest.CreateDefault(new Uri(URL));
-        w.PreAuthenticate = true;
-        w.UseDefaultCredentials = true;
-        WebResponse response = w.GetResponse();
+        WebRequest wr = WebRequest.CreateDefault(new Uri(URL));
+        wr.PreAuthenticate = true;
+        wr.UseDefaultCredentials = true;
         int bytesRead = 0;
-        FileStream fsWriter = new FileStream(SavePath, FileMode.CreateNew, FileAccess.Write);
-        Stream sReader = response.GetResponseStream();
-        byte[] buffer = new byte[bufferLength];
-        do
+
+        using (FileStream writer = new FileStream(SavePath, FileMode.Create))
         {
-            bytesRead = sReader.Read(buffer, 0, buffer.Length);
-            fsWriter.Write(buffer, 0, bytesRead);
+            using (WebResponse response = wr.GetResponse())
+            {
+                using (Stream cachedResponse = response.GetResponseStream())
+                {
+                    byte[] buffer = new byte[bufferLength];
+                    do { bytesRead = cachedResponse.Read(buffer, 0, buffer.Length); writer.Write(buffer, 0, bytesRead); } while (bytesRead > 0);
+                }
+            }
+
         }
-        while (bytesRead > 0);
-        sReader.Close();
-        fsWriter.Close();
-        response.Close();
     }
 
     #endregion
