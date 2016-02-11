@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.Xml;
 using System.Xml.XPath;
 using System.Net;
 using System.IO;
@@ -12,12 +10,12 @@ using System.IO;
 
 public partial class xmlAccess
 {
+    const int cMaxDegreeOfParallelism = 3;
 
-    public System.Collections.Generic.SynchronizedCollection<string> Errorlist = new System.Collections.Generic.SynchronizedCollection<string>();
+    public SynchronizedCollection<string> Errorlist = new SynchronizedCollection<string>();
 
     public void GetLatest(Settings request)
     {
-        // equivalent to: foreach (string n in numbers)
         Parallel.ForEach<xmlFeed>(request.Items, delegate (xmlFeed n)
         {
             try { GetLatestItem(n); }
@@ -30,56 +28,14 @@ public partial class xmlAccess
         Console.Clear();
         Console.WriteLine(GetCount(request).ToString() + " Downloads");
         ParallelOptions options = new ParallelOptions();
-        options.MaxDegreeOfParallelism = 3;
+        options.MaxDegreeOfParallelism = cMaxDegreeOfParallelism;
         Parallel.ForEach<xmlFeed>(request.Items, options, delegate (xmlFeed n)
         {
             DownloadItems(n);
         });
 
     }
-    #region Old unused code
-    //List<System.Threading.Thread> ThreadList = new List<System.Threading.Thread>(3);
-    //for (int iII = 0; iII < ThreadCount; iII++)
-    // {
-    //     ThreadList.Add(new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(DownloadItems)));
-    // }
-
-    // int count = request.Items.Count - 1;
-    // int i = 0;
-
-
-    //while (i != count)
-    //{
-    //    for (int ii = 0; ii < ThreadCount; ii++)
-    //    {
-    //        if (ThreadList[ii].ThreadState == System.Threading.ThreadState.Stopped)
-    //        {
-    //            ThreadList[ii] = new System.Threading.Thread(new System.Threading.ParameterizedThreadStart(DownloadItems));
-    //            ThreadList[ii].Start(request.Items[i]);
-    //            i += 1;
-    //        }
-    //        else if (ThreadList[ii].ThreadState == System.Threading.ThreadState.Unstarted)
-    //        {
-    //            ThreadList[ii].Start(request.Items[i]);
-    //            i += 1;
-    //        }
-    //        if (i == count) { break; }
-    //    }
-    //    System.Threading.Thread.Sleep(1000);
-    //}
-
-    //old get cout logic
-    //  int I = 0;
-    //  foreach (xmlFeed feed in request.Items)
-    // {
-    //     foreach (xmlFeedDownload it in feed.download)
-    //     {
-    //         if (string.Equals(it.downloaded, "False")) { I += 1; }
-    //     }
-    // }
-    // return I;
-    #endregion
-
+  
     public int GetCount(Settings request)
     {
         return (from xmlFeed X in request.Items from xmlFeedDownload Y in X.download where Y.downloaded == "False" select Y).ToList().Count;
@@ -91,7 +47,7 @@ public partial class xmlAccess
     {
         if (Errorlist.Count > 0)
         {
-            StreamWriter A = File.CreateText(AppDomain.CurrentDomain.BaseDirectory + "\\" + "errors.log");
+            StreamWriter A = File.CreateText(AppDomain.CurrentDomain.BaseDirectory + "\\errors.log");
             foreach (string item in Errorlist)
             {
                 A.WriteLine(item);
@@ -113,11 +69,7 @@ public partial class xmlAccess
             XPathDocument feed = new XPathDocument(request.path);
             XPathNavigator Navigator = feed.CreateNavigator();
             XPathNodeIterator Iterator;
-            // if (string.IsNullOrEmpty(request.xpath) || string.Equals(XpathDefaultString, request.xpath))
             Iterator = Navigator.Select(DefaultXpath);
-            //else{XPathExpression Expression = XPathExpression.Compile(request.xpath);
-            //Iterator = Navigator.Select(Expression);}
-            // XPathNodeIterator Iterator; //= Navigator.Select(Expression);
             while (Iterator.MoveNext())
             {
                 XPathNavigator Obj = Iterator.Current;
@@ -164,34 +116,11 @@ public partial class xmlAccess
             {
                 string filename = string.Concat(AppDomain.CurrentDomain.BaseDirectory, request1.id, "\\", item.uid);
                 if (!Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + request1.id)) { Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + request1.id); }
-                if (File.Exists(filename)) { File.Delete(filename); }//delete partial files
+                if (File.Exists(filename)) { File.Delete(filename); }
                 downloadFile(item, filename);
             }
         });
-
-
-        //foreach (xmlFeedDownload item in ItemsToDownload)
-        //{
-
-        //    if (string.Equals(item.downloaded, "False"))
-        //    {
-        //        string filename = string.Concat(AppDomain.CurrentDomain.BaseDirectory, request1.id, "\\", item.uid);
-        //        if (!Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + request1.id)) { Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + request1.id); }
-        //        if (File.Exists(filename)) { File.Delete(filename); }//delete partial files
-        //        downloadFile(item, filename);
-        //    }
-        //}
     }
-
-
-    // Parallel.ForEach<xmlFeedDownload>(request.download, delegate(xmlFeedDownload item)
-    //{
-    //    if (string.Equals(item.downloaded, "False")){
-    //        string filename = string.Concat(AppDomain.CurrentDomain.BaseDirectory, request.id, "\\", item.uid);
-    //        if (!Directory.Exists(AppDomain.CurrentDomain.BaseDirectory + request.id)) { Directory.CreateDirectory(AppDomain.CurrentDomain.BaseDirectory + request.id); }
-    //        if (File.Exists(filename)) { File.Delete(filename); }//delete partial files
-    //    downloadFile(item, filename);}
-    //});
 
 
     private void downloadFile(xmlFeedDownload request, string FileName)
@@ -228,6 +157,7 @@ public partial class xmlAccess
         catch (Exception X) { HandleErrors(string.Concat(request.uid, ":", X.Message)); }
     }
 
+    //Not orginal to me... Found this online somewhere
     public void StreamDownloadFile(string URL, String SavePath)
     {
         const int bufferLength = 32768; //32k
@@ -253,7 +183,6 @@ public partial class xmlAccess
 
     #endregion
 
-
     public void HandleErrors(params string[] Message)
     {
         System.Text.StringBuilder t = new System.Text.StringBuilder();
@@ -262,16 +191,4 @@ public partial class xmlAccess
         Console.WriteLine(t.ToString());
         Errorlist.Add(t.ToString());
     }
-
-
-    /*
-           Public Sub HandleErrors(ByVal ParamArray Message() As String)
-        Dim t As New Text.StringBuilder()
-        For Each s In Message
-            t.Append(s)
-        Next
-        Console.WriteLine(t.ToString)
-        Errorlist.Add(t.ToString)
-    End Sub
-     */
 }

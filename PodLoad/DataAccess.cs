@@ -3,7 +3,6 @@ using System.Xml.Serialization;
 using System.IO;
 using System.Text;
 using System.IO.Compression;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace podload
 {
@@ -53,15 +52,16 @@ namespace podload
             System.Xml.XmlWriter Writer = System.Xml.XmlWriter.Create(Builder, xSettings);
 
             using (var outputFile = new FileStream(filename, FileMode.Create))
-            using (var compressionStream = new DeflateStream(outputFile, CompressionMode.Compress))
             {
-                Serializer.Serialize(compressionStream, s);
-                Writer.Close();
-                compressionStream.Flush();
-                outputFile.Flush();
-                compressionStream.Close();
-                outputFile.Close();
-
+                using (var compressionStream = new DeflateStream(outputFile, CompressionMode.Compress))
+                {
+                    Serializer.Serialize(compressionStream, s);
+                    Writer.Close();
+                    compressionStream.Flush();
+                    outputFile.Flush();
+                    compressionStream.Close();
+                    outputFile.Close();
+                }
             }
         }
 
@@ -69,7 +69,6 @@ namespace podload
         public Settings LoadObject(string filename)
         {
             Settings value = new Settings();
-            // var formatter = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
             XmlSerializer Serializer = new XmlSerializer(value.GetType());
             StringBuilder Builder = new StringBuilder();
 
