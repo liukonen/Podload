@@ -8,15 +8,11 @@ namespace podload
 {
     class DataAccess
     {
-
-
         public Settings LoadXML(string FileName)
         {
-            Settings S = new Settings();
             if (File.Exists(FileName))
             {
-                XmlSerializer Serializer = new XmlSerializer(S.GetType());
-                S = (Settings)Serializer.Deserialize(File.OpenRead(FileName));
+                return Load(FileName, false);
             }
             else
             {
@@ -24,68 +20,55 @@ namespace podload
                 Console.Beep();
                 Console.ReadLine();
             }
-            return S;
+            return null;
         }
-
-        public void saveXml(Settings S, string FileName)
+        public Settings LoadObject(string filename)
         {
-            XmlSerializer Serializer = new XmlSerializer(S.GetType());
-            StringBuilder Builder = new StringBuilder();
-            System.Xml.XmlWriterSettings xSettings = new System.Xml.XmlWriterSettings();
-            xSettings.Encoding = Encoding.UTF8;
-            xSettings.OmitXmlDeclaration = true;
-            System.Xml.XmlWriter Writer = System.Xml.XmlWriter.Create(Builder, xSettings);
-            Serializer.Serialize(Writer, S);
-            Writer.Close();
-            System.IO.StreamWriter Writer1 = File.CreateText(FileName);
-            Writer1.Write(Builder.ToString());
-            Writer1.Close();
+            return Load(filename, true);
         }
+        public void saveXml(Settings S, string FileName) { Save(S, FileName, false); }
+        public void SaveObject(Settings s, string filename) { Save(s, filename, true); }
 
-        public void SaveObject(Settings s, string filename)
+        private void Save(Settings setting, string fileName, bool compresionEnabled)
         {
-            XmlSerializer Serializer = new XmlSerializer(s.GetType());
+            XmlSerializer Serializer = new XmlSerializer(setting.GetType());
             StringBuilder Builder = new StringBuilder();
-            System.Xml.XmlWriterSettings xSettings = new System.Xml.XmlWriterSettings();
-            xSettings.Encoding = Encoding.UTF8;
-            xSettings.OmitXmlDeclaration = true;
-            System.Xml.XmlWriter Writer = System.Xml.XmlWriter.Create(Builder, xSettings);
+            System.Xml.XmlWriter Writer = System.Xml.XmlWriter.Create(Builder, getWriterSettings());
 
-            using (var outputFile = new FileStream(filename, FileMode.Create))
+            using (FileStream F = new FileStream(fileName, FileMode.Create))
             {
-                using (var compressionStream = new DeflateStream(outputFile, CompressionMode.Compress))
+                using (DeflateStream gz = new DeflateStream(F, CompressionMode.Compress, false))
                 {
-                    Serializer.Serialize(compressionStream, s);
-                    Writer.Close();
-                    compressionStream.Flush();
-                    outputFile.Flush();
-                    compressionStream.Close();
-                    outputFile.Close();
+                    if (compresionEnabled) { Serializer.Serialize(gz, setting); }
+                    else { Serializer.Serialize(F, setting); }
                 }
+
             }
         }
-
-
-        public Settings LoadObject(string filename)
+        private Settings Load(string fileName, bool compressionEnabled)
         {
             Settings value = new Settings();
             XmlSerializer Serializer = new XmlSerializer(value.GetType());
-            StringBuilder Builder = new StringBuilder();
 
-            using (var outputFile = new FileStream(filename, FileMode.Open))
-            using (var compressionStream = new System.IO.Compression.DeflateStream(outputFile, System.IO.Compression.CompressionMode.Decompress))
+            using (var outputFile = new FileStream(fileName, FileMode.Open))
             {
-                value = (Settings)Serializer.Deserialize(compressionStream);
-                compressionStream.Flush();
-                outputFile.Flush();
-                compressionStream.Close();
-                outputFile.Close();
+                if (compressionEnabled)
+                {
+                    using (var compressionStream = new DeflateStream(outputFile, System.IO.Compression.CompressionMode.Decompress))
+                    {
+                        value = (Settings)Serializer.Deserialize(compressionStream);
+                    }
+                }
+                else { value = (Settings)Serializer.Deserialize(outputFile); }
             }
-
             return value;
         }
-
-
-
+        private System.Xml.XmlWriterSettings getWriterSettings()
+        {
+            System.Xml.XmlWriterSettings xSettings = new System.Xml.XmlWriterSettings();
+            xSettings.Encoding = Encoding.UTF8;
+            xSettings.OmitXmlDeclaration = true;
+            return xSettings;
+        }
     }
 }
