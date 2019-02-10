@@ -23,7 +23,8 @@ move up into my source control (once I find them :/)
 
 # Learnings
 * Mono Development
-* Parallel programing
+* Parallel programing design practices
+* System Task Library
 * Basic file transfer over network
 * XML
 * Linq
