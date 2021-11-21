@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace podload
+namespace PodLoad
 {
     class Program
     {
@@ -10,71 +10,10 @@ namespace podload
         {
             try
             {
-                string FileName = AppDomain.CurrentDomain.BaseDirectory + "podload.xml";
-                string File = AppDomain.CurrentDomain.BaseDirectory + "podload.zin";
-
-                var access = new DataAccess();
-                var Setting = new Settings();
-                if (args.Length == 0)
-                {
-                    Setting = access.LoadObject(File);
-
-                    XmlAccess xAccess = new XmlAccess();
-                    xAccess.GetLatest(Setting);
-                    access.SaveObject(Setting, File);
-                    xAccess.DownloadFiles(Setting);
-
-                    access.SaveObject(Setting, File);
-                    xAccess.SaveErrors();
-                }
-                else
-                {
-                    Setting = access.LoadObject(File);
-
-                    switch (args[0])
-                    {
-                        case "export":
-                            access.SaveXml(access.LoadObject(File), FileName);
-                            break;
-                        case "import":
-                            access.SaveObject(access.LoadXML(FileName), File);
-                            break;
-                        case "add":
-                            //Adds a new feed to the list
-                            //podload add NewFeedName http://Newfeed/atom.xml
-                            XmlFeed newfeed = new XmlFeed
-                            {
-                                Download = new List<XmlFeedDownload>(),
-                                Id = args[1],
-                                Path = args[2]
-                            };
-                            Setting.Items.Add(newfeed);
-                            access.SaveObject(Setting, File);
-
-                        break;
-                        case "remove":
-                            //Removes a feed from the list
-                            //podload remove ID
-                            Setting.Items.Remove((from XmlFeed item in Setting.Items where item.Id == args[1] select item).First());
-                            access.SaveObject(Setting, File);
-                            break;
-                        case "list":
-                            //Displays all of the available feeds
-                            foreach  (XmlFeed feed in Setting.Items)
-                            {
-                                Console.WriteLine(string.Concat(feed.Id, " ", feed.Path));
-                            }
-                            break;
-                        case "-h":
-                        case "/?":
-                            DisplayHelp();
-                                break;
-                        default:
-                            Console.WriteLine("Not a valid command. Valid commands include the following: ");
-                            DisplayHelp();
-                            break;
-                     }
-                }
+                string xmlfile = AppDomain.CurrentDomain.BaseDirectory + "podload.xml";
+                string zinfile = AppDomain.CurrentDomain.BaseDirectory + "podload.zin";
+                if (args.Length == 0) { Run(zinfile); }
+                else { CheckCondtions(zinfile, xmlfile, args); }
             }
             catch (Exception X)
             {
@@ -83,6 +22,57 @@ namespace podload
             }
         }
 
+        private static void CheckCondtions(string zinfilename, string xmlfilename, string[] args) 
+        {
+            var setting = DataAccess.LoadObject(zinfilename);
+            switch (args[0])
+            {
+                case "export":
+                    DataAccess.SaveXml(DataAccess.LoadObject(zinfilename), xmlfilename);
+                    break;
+                case "import":
+                    DataAccess.SaveObject(DataAccess.LoadXML(xmlfilename), zinfilename);
+                    break;
+                case "add":
+                    AddFeed(setting, args[1], args[2], zinfilename);
+                    break;
+                case "remove":
+                    RemoveFeed(setting, args[1], zinfilename);
+                    break;
+                case "list":
+                    DisplayList(setting);
+                    break;
+                default:
+                    DisplayHelp();
+                    break;
+            }
+        }
+        private static void Run(string file) 
+        {
+            var setting = DataAccess.LoadObject(file);
+            var xAccess = new FeedAccess();
+            xAccess.GetLatest(setting);
+            DataAccess.SaveObject(setting, file);
+            xAccess.DownloadFiles(setting);
+            DataAccess.SaveObject(setting, file);
+            xAccess.SaveErrors();
+        }
+        private static void AddFeed(Settings setting, string id, string path, string file)
+        {
+            var newfeed = new XmlFeed { Download = new List<XmlFeedDownload>(), Id = id, Path = path };
+            setting.Items.Add(newfeed);
+            DataAccess.SaveObject(setting, file);
+        }
+        private static void RemoveFeed(Settings setting, string feedid, string file)
+        {
+            setting.Items.Remove(setting.Items.Where(item=> item.Id == feedid).First());
+            DataAccess.SaveObject(setting, file);
+        }
+        private static void DisplayList(Settings setting) 
+        {
+            foreach (var feed in setting.Items)
+                Console.WriteLine($"{feed.Id} {feed.Path}");
+        }
         private static void DisplayHelp() => Console.Write(PodLoad.Properties.Resources.ReadMe);
         
     }
