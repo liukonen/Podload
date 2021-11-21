@@ -26,14 +26,14 @@ namespace podload
         {
             return Load(filename, true);
         }
-        public void saveXml(Settings S, string FileName) { Save(S, FileName, false); }
+        public void SaveXml(Settings S, string FileName) { Save(S, FileName, false); }
         public void SaveObject(Settings s, string filename) { Save(s, filename, true); }
 
         private void Save(Settings setting, string fileName, bool compresionEnabled)
         {
             XmlSerializer Serializer = new XmlSerializer(setting.GetType());
             StringBuilder Builder = new StringBuilder();
-            System.Xml.XmlWriter Writer = System.Xml.XmlWriter.Create(Builder, getWriterSettings());
+            _ = System.Xml.XmlWriter.Create(Builder, GetWriterSettings());
 
             using (FileStream F = new FileStream(fileName, FileMode.Create))
             {
@@ -63,11 +63,13 @@ namespace podload
             }
             return value;
         }
-        private System.Xml.XmlWriterSettings getWriterSettings()
+        private System.Xml.XmlWriterSettings GetWriterSettings()
         {
-            System.Xml.XmlWriterSettings xSettings = new System.Xml.XmlWriterSettings();
-            xSettings.Encoding = Encoding.UTF8;
-            xSettings.OmitXmlDeclaration = true;
+            System.Xml.XmlWriterSettings xSettings = new System.Xml.XmlWriterSettings
+            {
+                Encoding = Encoding.UTF8,
+                OmitXmlDeclaration = true
+            };
             return xSettings;
         }
     }

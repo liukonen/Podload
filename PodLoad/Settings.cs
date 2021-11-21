@@ -1,60 +1,49 @@
 ﻿using System.Xml.Serialization;
 using System.Collections.Generic;
 
-[System.SerializableAttribute()]
-[System.Diagnostics.DebuggerStepThroughAttribute()]
-[System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
-[System.Xml.Serialization.XmlRootAttribute(Namespace = "", IsNullable = false, ElementName = "xml")]
+[System.Serializable()]
+[System.Diagnostics.DebuggerStepThrough()]
+[System.ComponentModel.DesignerCategory("code")]
+[XmlType(AnonymousType = true)]
+[XmlRoot(Namespace = "", IsNullable = false, ElementName = "xml")]
 public partial class Settings
 {
-
-    private List<xmlFeed> itemsField;
-    [System.Xml.Serialization.XmlElementAttribute("feed", Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
-    public List<xmlFeed> Items { get { return itemsField; } set { itemsField = value; } }
+    [XmlElement("feed", Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
+    public List<XmlFeed> Items { get; set; }
 }
 
 
 
 
-[System.SerializableAttribute()]
-[System.Diagnostics.DebuggerStepThroughAttribute()]
-[System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
-public partial class xmlFeed
+[System.Serializable()]
+[System.Diagnostics.DebuggerStepThrough()]
+[System.ComponentModel.DesignerCategory("code")]
+[XmlType(AnonymousType = true)]
+public partial class XmlFeed
 {
-    private List<xmlFeedDownload> downloadField;
-    private string idField;
-    private string pathField;
-    //private string xpathField;
+    [XmlElement("download", Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
+    public List<XmlFeedDownload> Download { get; set; }
 
-    [System.Xml.Serialization.XmlElementAttribute("download", Form = System.Xml.Schema.XmlSchemaForm.Unqualified)]
-    public List<xmlFeedDownload> download { get { return this.downloadField; } set { this.downloadField = value; } }
+    [XmlAttribute("id")]
+    public string Id { get; set; }
 
-    [System.Xml.Serialization.XmlAttributeAttribute()]
-    public string id { get { return this.idField; } set { this.idField = value; } }
-
-    [System.Xml.Serialization.XmlAttributeAttribute()]
-    public string path { get { return this.pathField; } set { this.pathField = value; } }
+    [XmlAttribute("path")]
+    public string Path { get; set; }
 
 }
 
-[System.SerializableAttribute()]
-[System.Diagnostics.DebuggerStepThroughAttribute()]
-[System.ComponentModel.DesignerCategoryAttribute("code")]
-[System.Xml.Serialization.XmlTypeAttribute(AnonymousType = true)]
-public partial class xmlFeedDownload
+[System.Serializable()]
+[System.Diagnostics.DebuggerStepThrough()]
+[System.ComponentModel.DesignerCategory("code")]
+[XmlType(AnonymousType = true)]
+public partial class XmlFeedDownload
 {
-    private string pathField;
-    private string downloadedField;
-    private string uidField;
+    [XmlAttribute("path")]
+    public string Path { get; set; }
 
-    [System.Xml.Serialization.XmlAttributeAttribute()]
-    public string path { get { return this.pathField; } set { this.pathField = value; } }
+    [XmlAttribute("downloaded")]
+    public string Downloaded { get; set; }
 
-    [System.Xml.Serialization.XmlAttributeAttribute()]
-    public string downloaded { get { return this.downloadedField; } set { this.downloadedField = value; } }
-
-    [System.Xml.Serialization.XmlAttributeAttribute()]
-    public string uid { get { return this.uidField; } set { this.uidField = value; } }
+    [XmlAttribute("uid")]
+    public string Uid { get; set; }
 }
