@@ -37,7 +37,7 @@ namespace PodLoad
             x.Download.Where(Y => Y.Downloaded == CustomBoolean.False)).Count();
         public void SaveErrors()
         {
-            if (!errorlist.IsEmpty) File.WriteAllText("\\errors.log", string.Join(Environment.NewLine, errorlist));
+            if (!errorlist.IsEmpty) File.WriteAllText(Path.DirectorySeparatorChar + "errors.log", string.Join(Environment.NewLine, errorlist));
         }
 
         #region Private Methods for get latest
@@ -78,7 +78,7 @@ namespace PodLoad
         {
             string dir = AppDomain.CurrentDomain.BaseDirectory;
             if (!Directory.Exists(dir + parentid)) { Directory.CreateDirectory(dir + parentid); }
-            return $"{dir}{parentid}\\{itemid}";     
+            return $"{dir}{parentid}{Path.DirectorySeparatorChar}{itemid}";     
         }
         private void DownloadFile(XmlFeedDownload request, string filename)
         {
