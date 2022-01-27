@@ -10,8 +10,8 @@ namespace PodLoad
         {
             try
             {
-                string xmlfile = AppDomain.CurrentDomain.BaseDirectory + "podload.xml";
-                string zinfile = AppDomain.CurrentDomain.BaseDirectory + "podload.zin";
+                string xmlfile = "podload.xml";
+                string zinfile = "podload.zin";
                 if (args.Length == 0) { Run(zinfile); }
                 else { CheckCondtions(zinfile, xmlfile, args); }
             }
