@@ -21,6 +21,9 @@ on my Linux mint machine, and using a Cron job, I have it scheduled to continue 
 windows for my home server. There are a few changes that need to be made, in order to make it work, which I will one day (soon)
 move up into my source control (once I find them :/)
 
+2024-03-02 - Migrated the code to GoLang... will not release a binary at this time, but go is fairly easy to compile.
+Thanks to both ChatGPT and Tabby with ideas / reference materials on how to do this.
+
 # Learnings
 * Mono Development
 * Parallel programing design practices
@@ -29,3 +32,4 @@ move up into my source control (once I find them :/)
 * XML
 * Linq
 * Compression
+* Go Programing

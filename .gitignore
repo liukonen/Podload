@@ -463,4 +463,7 @@ TestResults/
 *.dll.config
 *.cache
 *.suo
+*.xml
+*.zin
+*.mp3
 # Include dlls if theyb
