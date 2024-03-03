@@ -78,51 +78,68 @@ func Download(settings *Settings) *Settings {
 	for i := range settings.Items {
 		for j := range settings.Items[i].Download {
 			d := &settings.Items[i].Download[j]
+			s := settings.Items[i].Id
+			// folder := &settings.Items[i].Id
 			if d.Downloaded == "True" {
 				continue // Skip if already downloaded
 			}
 			// Start a new goroutine for each download
 			concurrency <- struct{}{} // Add to the channel to limit concurrency
-			go func(d *XmlFeedDownload) {
+			go func(d *XmlFeedDownload, s string) {
 				defer func() { <-concurrency }() // Remove from the channel when done
 
 				// download file
 				fmt.Println("downloading ", d.Path)
 				resp, err := client.Get(d.Path)
 				if err != nil {
-					fmt.Printf("Error downloading %s: What %v", d.Path, err)
+					fmt.Printf("Error downloading %s: %v", d.Path, err)
 					return
 				}
 				defer resp.Body.Close()
 				if resp.StatusCode != 200 {
-					fmt.Printf("Error downloading %s: What %v", d.Path, resp.StatusCode)
+					fmt.Printf("Error downloading %s: %v", d.Path, resp.StatusCode)
 				}
 
 				// detect charset
 				reader, _ := charset.NewReader(resp.Body, resp.Header.Get("Content-Type"))
 
+				//create folder if needed
+				_, errState := os.Stat(s)
+				if os.IsNotExist(errState) {
+					err := os.MkdirAll(s, 0755)
+					if err != nil {
+						fmt.Printf("Error creating %s: %v", s, err)
+						fmt.Println("")
+						return
+					}
+				}
+
+				//create path
+				filepath := fmt.Sprintf("%s%c%s", s, os.PathSeparator, d.Uid)
+				fmt.Println(filepath)
+
 				// save file with unique name
-				out, err := os.Create(d.Uid)
+				out, err := os.Create(filepath)
 				if err != nil {
-					fmt.Printf("Error creating %s: %v", d.Uid, err)
+					fmt.Printf("Error creating %s: %v", filepath, err)
 					fmt.Println("")
 					return
 				}
 
 				// write downloaded file
 				_, err = io.Copy(out, reader)
-				fmt.Println("saving ", d.Uid)
+				fmt.Println("saving ", filepath)
 				if err != nil {
-					fmt.Printf("Error writing %s: %v", d.Uid, err)
+					fmt.Printf("Error writing %s: %v", filepath, err)
 				}
 
 				out.Close()
 
 				// Use mutex to protect concurrent access to the settings slice
 				mutex.Lock()
-				d.Downloaded = "True" 
+				d.Downloaded = "True"
 				mutex.Unlock()
-			}(d) 
+			}(d, s)
 		}
 	}
 
